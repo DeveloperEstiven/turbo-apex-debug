@@ -1,0 +1,60 @@
+import * as vscode from "vscode";
+import { Config } from "../constants";
+
+const showErrorMessage = (message: string) => {
+  const prefixedMessage = `⚠️ Turbo System Debug: ${message}`;
+  vscode.window.showErrorMessage(prefixedMessage);
+};
+
+type KnownError = "NO_EDITOR" | "NOT_HIGHLIGHTED" | "NO_APEX";
+export const handleError = (type: KnownError) => {
+  switch (type) {
+    case "NO_EDITOR":
+      showErrorMessage("Editor is not active");
+      break;
+    case "NOT_HIGHLIGHTED":
+      showErrorMessage("No text highlighted");
+      break;
+    case "NO_APEX":
+      showErrorMessage("Please open an Apex (.cls) file");
+      break;
+    default:
+      showErrorMessage("An unknown error occurred");
+  }
+};
+
+export const getConfiguration = () => {
+  const {
+    errorMessagePrefixes,
+    logMessageDelimiter,
+    logMessagePrefixes,
+    promptPrefix,
+    includeClassName,
+    includeMethodName,
+    includeLineNum,
+  } = vscode.workspace.getConfiguration("turboSystemDebug") as unknown as Config;
+
+  const getPrefix = async (type: "REGULAR" | "ERROR" = "REGULAR") => {
+    const prefixes = type === "REGULAR" ? [...logMessagePrefixes, ...errorMessagePrefixes] : errorMessagePrefixes;
+
+    if (!prefixes.length) {
+      return "";
+    }
+
+    if (promptPrefix && prefixes.length > 1) {
+      return (await vscode.window.showQuickPick(prefixes, { placeHolder: "Select Prefix" })) || "";
+    }
+
+    return prefixes[getRandomIndex(prefixes)];
+  };
+
+  return {
+    delimiter: logMessageDelimiter,
+    getPrefix,
+    includeLineNum,
+    includeClassName,
+    includeMethodName,
+  };
+};
+
+export const getRandomIndex = <T>(array: T[]) => Math.floor(Math.random() * array.length);
