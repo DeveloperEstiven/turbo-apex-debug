@@ -1,6 +1,6 @@
 {
   "name": "turbo-system-debug",
-  "displayName": "turbo-system-debug",
+  "displayName": "Turbo System Debug",
   "description": "Turbo System Debug simplifies Apex debugging with real-time log streaming and advanced log management.",
   "version": "0.0.1",
   "engines": {
@@ -12,10 +12,77 @@
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "Turbo System Debug Configuration",
+      "properties": {
+        "turboSystemDebug.logMessagePrefixes": {
+          "type": "array",
+          "default": [
+            "❌",
+            "✅",
+            "🟨",
+            "🟥",
+            "🛑",
+            "🟠",
+            "🅰️",
+            "🅾️",
+            "🏵️"
+          ],
+          "description": "The prefix of the debug message."
+        },
+        "turboSystemDebug.errorMessagePrefixes": {
+          "type": "array",
+          "default": [],
+          "description": "The prefix of the error message."
+        },
+        "turboSystemDebug.logMessageDelimiter": {
+          "type": "string",
+          "default": ":",
+          "description": "The delimiter of the debug message."
+        },
+        "turboSystemDebug.promptPrefix": {
+          "type": "boolean",
+          "default": true,
+          "description": "Determines if you can select the prefix."
+        },
+        "turboSystemDebug.includeLineNum": {
+          "type": "boolean",
+          "default": true,
+          "description": "Determines if you can select the prefix."
+        },
+        "turboSystemDebug.includeClassName": {
+          "type": "boolean",
+          "default": true,
+          "description": "Determines if you can select the prefix."
+        },
+        "turboSystemDebug.includeMethodName": {
+          "type": "boolean",
+          "default": true,
+          "description": "Determines if you can select the prefix."
+        }
+      }
+    },
     "commands": [
       {
-        "command": "turbo-system-debug.helloWorld",
-        "title": "Hello World"
+        "command": "turbo-system-debug.log",
+        "title": "Turbo System Debug: Log"
+      },
+      {
+        "command": "turbo-system-debug.removeAll",
+        "title": "Turbo System Debug: Remove all logs"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "turbo-system-debug.log",
+        "key": "ctrl+alt+l",
+        "mac": "ctrl+alt+l"
+      },
+      {
+        "command": "turbo-system-debug.removeAll",
+        "key": "ctrl+alt+f",
+        "mac": "ctrl+alt+f"
       }
     ]
   },
