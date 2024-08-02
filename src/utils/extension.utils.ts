@@ -1,8 +1,8 @@
-import { TextDocument, Position, TextEditor, Range } from "vscode";
-import { SPACING_KEYWORDS, REGEXP, TYPES, ERROR_VAR_NAMES, ACCESS_MODIFIERS } from "../constants";
-import { getConfiguration, handleError } from "./common.utils";
+import { TextDocument, Position, TextEditor, Range, commands, DocumentSymbol, SymbolKind } from "vscode";
+import { SPACING_KEYWORDS, REGEXP, TYPES, ERROR_VAR_NAMES, APEX_EXT } from "../constants";
+import { findSymbols, getConfiguration, handleError } from "./common.utils";
 
-const determineSpacing = (document: TextDocument, lineNum: number): string => {
+const determineSpacing = (document: TextDocument, lineNum: number) => {
   let lineText = document.lineAt(lineNum).text;
   const keywordCount = SPACING_KEYWORDS.reduce((count, keyword) => count + (lineText.includes(keyword) ? 1 : 0), 0);
 
@@ -43,36 +43,37 @@ const buildDebug = ({
   return `${startLineBreak}${spacing}System.debug('${formattedPrefix}${formattedLineNum}${formattedClassName}${formattedMethodName}${text}${delimiter} ' + ${text}${suffix});${endLineBreak}`;
 };
 
-const getMethodName = (fullText: string, lineNumber: number, document: TextDocument): string => {
-  const trimmedText = fullText.trim();
-  const startLine = trimmedText.startsWith("@") || trimmedText.includes("(") ? lineNumber + 1 : lineNumber;
+const getMethodName = async (lineNumber: number, document: TextDocument): Promise<string> => {
+  const symbols = await commands.executeCommand<DocumentSymbol[]>("vscode.executeDocumentSymbolProvider", document.uri);
 
-  const findMethodName = (lineNum: number): string => {
-    while (lineNum >= 0) {
-      const lineText = document.lineAt(lineNum).text.trim();
-      if (ACCESS_MODIFIERS.some((keyword) => lineText.startsWith(keyword)) && isMethodLine(lineText)) {
-        return lineText.match(REGEXP.METHOD_NAME)?.[1] || "";
+  if (symbols?.length) {
+    const methodNames = findSymbols(SymbolKind.Method, symbols).map((method) => method.name);
+
+    while (lineNumber >= 0) {
+      const lineText = document.lineAt(lineNumber).text;
+      const matchingMethodName = methodNames.find((methodName) => lineText.includes(methodName));
+      if (matchingMethodName) {
+        return matchingMethodName;
       }
-      lineNum--;
+      lineNumber--;
     }
-    return "";
-  };
+  }
 
-  return findMethodName(startLine) || findMethodName(0);
+  return "";
 };
 
 export const insertDebug = async (selectionLineNum: number, text: string, editor: TextEditor) => {
   const { document } = editor;
+
   const { delimiter, includeLineNum, includeClassName, includeMethodName, getPrefix } = getConfiguration();
   const spacing = determineSpacing(document, selectionLineNum);
+
   const prefix = await getPrefix(ERROR_VAR_NAMES.includes(text.trim().toLowerCase()) ? "ERROR" : "REGULAR");
 
   const debugParams: BuildDebugStatementParams = { spacing, text, delimiter, prefix };
 
-  debugParams.className = includeClassName ? extractClassName(document.fileName) : undefined;
-  debugParams.methodName = includeMethodName
-    ? getMethodName(document.lineAt(editor.selections[0].end.line).text, selectionLineNum, document)
-    : undefined;
+  debugParams.className = includeClassName ? extractClassName(document.fileName) : "";
+  debugParams.methodName = includeMethodName ? await getMethodName(selectionLineNum, document) : "";
 
   await editor.edit((builder) => {
     for (let lineNum = selectionLineNum; lineNum < document.lineCount; lineNum++) {
@@ -129,14 +130,15 @@ export const removeAll = async (editor: TextEditor) => {
   await editor.edit((builder) => linesToDelete.reverse().forEach((range) => builder.delete(range)));
 };
 
+//TODO: support triggers
 export const extractClassName = (filePath: string): string => {
-  if (!filePath.endsWith(".cls")) {
+  if (!filePath.endsWith(APEX_EXT)) {
     handleError("NO_APEX");
     return "";
   }
-  const normalizedPath = filePath.replace(/\\/g, "/");
+  const normalizedPath = filePath.replace(REGEXP.BACKSLASH, "/");
   const fileNameWithExtension = normalizedPath.split("/").pop() || "";
-  return fileNameWithExtension.replace(".cls", "");
+  return fileNameWithExtension.replace(APEX_EXT, "");
 };
 
 interface BuildDebugStatementParams {
@@ -160,5 +162,3 @@ const shouldInsert = {
   afterException: (text: string, debugOutput: string) =>
     text.includes("Exception") && text.endsWith("{") && ERROR_VAR_NAMES.includes(debugOutput.trim().toLowerCase()),
 };
-
-const isMethodLine = (text: string): boolean => text.includes("(") && text.includes(")");
