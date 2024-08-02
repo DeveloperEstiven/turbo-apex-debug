@@ -1,6 +1,6 @@
 export const REGEXP = {
   LEADING_WHITESPACE: /^\s+/,
-  METHOD_NAME: /(\w+)\s*\(/,
+  BACKSLASH: /\\/g,
 } as const;
 
 export interface Config {
@@ -13,7 +13,10 @@ export interface Config {
   includeMethodName: boolean;
 }
 
-export const ERROR_VAR_NAMES = ["e", "err", "error", "ex", "exc", "exception"];
+export const ERROR_VAR_EXACT_NAMES = ["error", "exception"];
+export const ERROR_VAR_NAMES = [...ERROR_VAR_EXACT_NAMES, ...["e", "err", "ex", "exc"]];
+
+export const APEX_EXT = ".cls";
 
 export const TYPES = [
   "Integer",
@@ -50,5 +53,3 @@ export const SPACING_KEYWORDS = [
   ")",
   "{",
 ];
-
-export const ACCESS_MODIFIERS = ["public ", "private ", "protected ", "global ", "override ", "@IsTest ", "static "];

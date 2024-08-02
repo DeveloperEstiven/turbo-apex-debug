@@ -58,3 +58,8 @@ export const getConfiguration = () => {
 };
 
 export const getRandomIndex = <T>(array: T[]) => Math.floor(Math.random() * array.length);
+
+export const findSymbols = (kind: vscode.SymbolKind, symbols: vscode.DocumentSymbol[]): vscode.DocumentSymbol[] => {
+  const instances = symbols.filter((symbol) => symbol.kind === kind);
+  return instances.concat(symbols.flatMap((symbol) => findSymbols(kind, symbol.children)));
+};
