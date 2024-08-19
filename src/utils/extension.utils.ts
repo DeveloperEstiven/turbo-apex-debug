@@ -69,6 +69,9 @@ export const insertDebug = async (selectionLineNum: number, text: string, editor
   const spacing = determineSpacing(document, selectionLineNum);
 
   const prefix = await getPrefix(ERROR_VAR_NAMES.includes(text.trim().toLowerCase()) ? "ERROR" : "REGULAR");
+  if (!prefix) {
+    return;
+  }
 
   const debugParams: BuildDebugStatementParams = { spacing, text, delimiter, prefix };
 
