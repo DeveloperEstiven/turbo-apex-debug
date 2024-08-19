@@ -41,8 +41,16 @@ export const getConfiguration = () => {
       return "";
     }
 
+    const RANDOMIZE = "🔀 Randomize";
     if (promptPrefix && prefixes.length > 1) {
-      return (await vscode.window.showQuickPick(prefixes, { placeHolder: "Select Prefix" })) || "";
+      const userSelection = await vscode.window.showQuickPick([RANDOMIZE, ...prefixes], {
+        placeHolder: "Select Prefix",
+      });
+
+      if (userSelection === RANDOMIZE) {
+        return prefixes[getRandomIndex(prefixes)];
+      }
+      return userSelection;
     }
 
     return prefixes[getRandomIndex(prefixes)];
