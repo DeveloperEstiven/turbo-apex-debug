@@ -51,7 +51,7 @@
           "default": true,
           "description": "Determines if you can select the prefix."
         },
-        "turboSystemDebug.includeClassName": {
+        "turboSystemDebug.includeEntityName": {
           "type": "boolean",
           "default": true,
           "description": "Determines if you can select the prefix."

@@ -6,7 +6,7 @@ const showErrorMessage = (message: string) => {
   vscode.window.showErrorMessage(prefixedMessage);
 };
 
-type KnownError = "NO_EDITOR" | "NOT_HIGHLIGHTED" | "NO_APEX";
+type KnownError = "NO_EDITOR" | "NOT_HIGHLIGHTED" | "INVALID_ENTITY";
 export const handleError = (type: KnownError) => {
   switch (type) {
     case "NO_EDITOR":
@@ -15,8 +15,8 @@ export const handleError = (type: KnownError) => {
     case "NOT_HIGHLIGHTED":
       showErrorMessage("No text highlighted");
       break;
-    case "NO_APEX":
-      showErrorMessage("Please open an Apex (.cls) file");
+    case "INVALID_ENTITY":
+      showErrorMessage("Please open an Apex (.cls) or Trigger (.trigger) file");
       break;
     default:
       showErrorMessage("An unknown error occurred");
@@ -29,7 +29,7 @@ export const getConfiguration = () => {
     logMessageDelimiter,
     logMessagePrefixes,
     promptPrefix,
-    includeClassName,
+    includeEntityName,
     includeMethodName,
     includeLineNum,
   } = vscode.workspace.getConfiguration("turboSystemDebug") as unknown as Config;
@@ -52,7 +52,7 @@ export const getConfiguration = () => {
     delimiter: logMessageDelimiter,
     getPrefix,
     includeLineNum,
-    includeClassName,
+    includeEntityName,
     includeMethodName,
   };
 };

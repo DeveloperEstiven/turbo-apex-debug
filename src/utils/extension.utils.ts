@@ -1,5 +1,5 @@
 import { TextDocument, Position, TextEditor, Range, commands, DocumentSymbol, SymbolKind } from "vscode";
-import { SPACING_KEYWORDS, REGEXP, TYPES, ERROR_VAR_NAMES, APEX_EXT } from "../constants";
+import { SPACING_KEYWORDS, REGEXP, TYPES, ERROR_VAR_NAMES, SUPPORTED_EXTENSIONS } from "../constants";
 import { findSymbols, getConfiguration, handleError } from "./common.utils";
 
 const determineSpacing = (document: TextDocument, lineNum: number) => {
@@ -30,7 +30,7 @@ const buildDebug = ({
   startBreak,
   endBreak,
   suffix = "",
-  className,
+  entityName,
   lineNum,
   methodName,
 }: BuildDebugStatementParams) => {
@@ -38,9 +38,9 @@ const buildDebug = ({
   const endLineBreak = endBreak ? "\n" : "";
   const formattedPrefix = prefix ? `${prefix} ` : "";
   const formattedLineNum = lineNum ? `[${lineNum}] ` : "";
-  const formattedClassName = className ? `[${className}] ` : "";
+  const formattedEntityName = entityName ? `[${entityName}] ` : "";
   const formattedMethodName = methodName ? `[${methodName}] ` : "";
-  return `${startLineBreak}${spacing}System.debug('${formattedPrefix}${formattedLineNum}${formattedClassName}${formattedMethodName}${text}${delimiter} ' + ${text}${suffix});${endLineBreak}`;
+  return `${startLineBreak}${spacing}System.debug('${formattedPrefix}${formattedLineNum}${formattedEntityName}${formattedMethodName}${text}${delimiter} ' + ${text}${suffix});${endLineBreak}`;
 };
 
 const getMethodName = async (lineNumber: number, document: TextDocument): Promise<string> => {
@@ -65,15 +65,24 @@ const getMethodName = async (lineNumber: number, document: TextDocument): Promis
 export const insertDebug = async (selectionLineNum: number, text: string, editor: TextEditor) => {
   const { document } = editor;
 
-  const { delimiter, includeLineNum, includeClassName, includeMethodName, getPrefix } = getConfiguration();
+  const { delimiter, includeLineNum, includeEntityName, includeMethodName, getPrefix } = getConfiguration();
   const spacing = determineSpacing(document, selectionLineNum);
 
   const prefix = await getPrefix(ERROR_VAR_NAMES.includes(text.trim().toLowerCase()) ? "ERROR" : "REGULAR");
 
   const debugParams: BuildDebugStatementParams = { spacing, text, delimiter, prefix };
 
-  debugParams.className = includeClassName ? extractClassName(document.fileName) : "";
-  debugParams.methodName = includeMethodName ? await getMethodName(selectionLineNum, document) : "";
+  const fileExtension = extractFileExtension(document.fileName);
+  if (!fileExtension) {
+    return;
+  }
+
+  debugParams.entityName = includeEntityName ? extractEntityName(document.fileName, fileExtension) : "";
+
+  // trigger doesn't contain methods
+  if (fileExtension !== ".trigger") {
+    debugParams.methodName = includeMethodName ? await getMethodName(selectionLineNum, document) : "";
+  }
 
   await editor.edit((builder) => {
     for (let lineNum = selectionLineNum; lineNum < document.lineCount; lineNum++) {
@@ -130,15 +139,19 @@ export const removeAll = async (editor: TextEditor) => {
   await editor.edit((builder) => linesToDelete.reverse().forEach((range) => builder.delete(range)));
 };
 
-//TODO: support triggers
-export const extractClassName = (filePath: string): string => {
-  if (!filePath.endsWith(APEX_EXT)) {
-    handleError("NO_APEX");
+const extractFileExtension = (filePath: string) => {
+  const fileExtension = SUPPORTED_EXTENSIONS.find((ext) => filePath.endsWith(ext));
+  if (!fileExtension) {
+    handleError("INVALID_ENTITY");
     return "";
   }
+  return fileExtension;
+};
+
+export const extractEntityName = (filePath: string, ext: (typeof SUPPORTED_EXTENSIONS)[number]) => {
   const normalizedPath = filePath.replace(REGEXP.BACKSLASH, "/");
   const fileNameWithExtension = normalizedPath.split("/").pop() || "";
-  return fileNameWithExtension.replace(APEX_EXT, "");
+  return fileNameWithExtension.replace(ext, "");
 };
 
 interface BuildDebugStatementParams {
@@ -150,15 +163,16 @@ interface BuildDebugStatementParams {
   endBreak?: boolean;
   suffix?: string;
   lineNum?: number;
-  className?: string;
+  entityName?: string;
   methodName?: string;
 }
 
-const shouldInsert = {
-  afterSemicolon: (text: string) => text.includes(";"),
-  beforeReturn: (text: string) => text.startsWith("return") || text.startsWith("throw"),
-  afterBrace: (text: string) => text.endsWith("{") && TYPES.every((type) => !text.includes(type)),
-  beforeBrace: (text: string) => text.endsWith("}"),
-  afterException: (text: string, debugOutput: string) =>
+type InsertType = "afterException" | "beforeReturn" | "afterSemicolon" | "afterBrace" | "beforeBrace";
+const shouldInsert: Record<InsertType, (...args: string[]) => boolean> = {
+  afterSemicolon: (text) => text.includes(";"),
+  beforeReturn: (text) => text.startsWith("return") || text.startsWith("throw"),
+  afterBrace: (text) => text.endsWith("{") && TYPES.every((type) => !text.includes(type)),
+  beforeBrace: (text) => text.endsWith("}"),
+  afterException: (text, debugOutput) =>
     text.includes("Exception") && text.endsWith("{") && ERROR_VAR_NAMES.includes(debugOutput.trim().toLowerCase()),
 };

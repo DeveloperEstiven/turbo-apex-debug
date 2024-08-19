@@ -9,14 +9,14 @@ export interface Config {
   logMessageDelimiter: string;
   promptPrefix: boolean;
   includeLineNum: boolean;
-  includeClassName: boolean;
+  includeEntityName: boolean;
   includeMethodName: boolean;
 }
 
 export const ERROR_VAR_EXACT_NAMES = ["error", "exception"];
 export const ERROR_VAR_NAMES = [...ERROR_VAR_EXACT_NAMES, ...["e", "err", "ex", "exc"]];
 
-export const APEX_EXT = ".cls";
+export const SUPPORTED_EXTENSIONS = [".cls", ".trigger", ".apex"] as const;
 
 export const TYPES = [
   "Integer",
