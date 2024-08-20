@@ -5,9 +5,9 @@ import { insertDebug, removeAll } from "./utils/extension.utils";
 const { registerCommand } = commands;
 
 export function activate(context: ExtensionContext) {
-  window.showInformationMessage("Turbo System Debug is Activated");
+  window.showInformationMessage("Turbo Apex Debug is Activated");
 
-  const logDisposable = registerCommand("turbo-system-debug.log", () => {
+  const logDisposable = registerCommand("turbo-apex-debug.log", () => {
     const editor = window.activeTextEditor;
     if (!editor) {
       return handleError("NO_EDITOR");
@@ -23,7 +23,7 @@ export function activate(context: ExtensionContext) {
   });
   context.subscriptions.push(logDisposable);
 
-  const removeAllDisposable = registerCommand("turbo-system-debug.removeAll", () => {
+  const removeAllDisposable = registerCommand("turbo-apex-debug.removeAll", () => {
     const editor = window.activeTextEditor;
     if (!editor) {
       return handleError("NO_EDITOR");

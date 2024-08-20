@@ -1,88 +1,99 @@
 {
-  "name": "turbo-system-debug",
-  "displayName": "Turbo System Debug",
-  "description": "Turbo System Debug simplifies Apex debugging with real-time log streaming and advanced log management.",
+  "name": "turbo-apex-debug",
+  "displayName": "Turbo Apex Debug",
+  "description": "Simplifies Apex debugging",
   "version": "0.0.1",
+  "publisher": "GonzalezDev",
+  "icon": "img/icon.png",
   "engines": {
     "vscode": "^1.91.0"
   },
   "categories": [
     "Other"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DeveloperEstiven/turbo-apex-debug"
+  },
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
     "configuration": {
       "type": "object",
-      "title": "Turbo System Debug Configuration",
+      "title": "Turbo Apex Debug Configuration",
       "properties": {
-        "turboSystemDebug.logMessagePrefixes": {
+        "turboApexDebug.logMessagePrefixes": {
+          "type": "array",
+          "default": [
+            "✅",
+            "❎",
+            "🟢",
+            "🟧",
+            "🟠",
+            "🟨",
+            "🟡"
+          ],
+          "description": "Customize the prefixes that appear before your debug messages. These symbols help you quickly identify the nature of the log entry. Leave empty if no prefix is needed."
+        },
+        "turboApexDebug.errorMessagePrefixes": {
           "type": "array",
           "default": [
             "❌",
-            "✅",
-            "🟨",
             "🟥",
+            "🔴",
             "🛑",
-            "🟠",
-            "🅰️",
-            "🅾️",
-            "🏵️"
+            "⭕️",
+            "🚫"
           ],
-          "description": "The prefix of the debug message."
+          "description": "Define specific prefixes for error messages. Leave empty if no prefix is needed."
         },
-        "turboSystemDebug.errorMessagePrefixes": {
-          "type": "array",
-          "default": [],
-          "description": "The prefix of the error message."
-        },
-        "turboSystemDebug.logMessageDelimiter": {
+        "turboApexDebug.logMessageDelimiter": {
           "type": "string",
           "default": ":",
-          "description": "The delimiter of the debug message."
+          "description": "Specify the character or symbol that separates the log statement."
         },
-        "turboSystemDebug.promptPrefix": {
+        "turboApexDebug.promptPrefix": {
           "type": "boolean",
           "default": true,
-          "description": "Determines if you can select the prefix."
+          "description": "Enable this option to manually select a prefix for your debug messages when prompted. When disabled, a random prefix will be chosen from the provided list, if available."
         },
-        "turboSystemDebug.includeLineNum": {
+        "turboApexDebug.includeLineNum": {
           "type": "boolean",
           "default": true,
-          "description": "Determines if you can select the prefix."
+          "description": "Automatically include the line number in debug statements."
         },
-        "turboSystemDebug.includeEntityName": {
+        "turboApexDebug.includeEntityName": {
           "type": "boolean",
           "default": true,
-          "description": "Determines if you can select the prefix."
+          "description": "Automatically include the entity name (class or trigger) in debug statements."
         },
-        "turboSystemDebug.includeMethodName": {
+        "turboApexDebug.includeMethodName": {
           "type": "boolean",
           "default": true,
-          "description": "Determines if you can select the prefix."
+          "description": "Automatically include the method name in debug statements. Disabled for triggers."
         }
       }
     },
     "commands": [
       {
-        "command": "turbo-system-debug.log",
-        "title": "Turbo System Debug: Log"
+        "command": "turbo-apex-debug.log",
+        "title": "Turbo Apex Debug: Log"
       },
       {
-        "command": "turbo-system-debug.removeAll",
-        "title": "Turbo System Debug: Remove all logs"
+        "command": "turbo-apex-debug.removeAll",
+        "title": "Turbo Apex Debug: Remove all logs"
       }
     ],
     "keybindings": [
       {
-        "command": "turbo-system-debug.log",
+        "command": "turbo-apex-debug.log",
         "key": "ctrl+alt+l",
         "mac": "ctrl+alt+l"
       },
       {
-        "command": "turbo-system-debug.removeAll",
-        "key": "ctrl+alt+f",
-        "mac": "ctrl+alt+f"
+        "command": "turbo-apex-debug.removeAll",
+        "key": "ctrl+alt+e",
+        "mac": "ctrl+alt+e"
       }
     ]
   },
