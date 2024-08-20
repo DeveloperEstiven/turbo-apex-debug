@@ -80,10 +80,11 @@ export const insertDebug = async (selectionLineNum: number, text: string, editor
     return;
   }
 
-  debugParams.entityName = includeEntityName ? extractEntityName(document.fileName, fileExtension) : "";
+  if (fileExtension !== ".apex") {
+    debugParams.entityName = includeEntityName ? extractEntityName(document.fileName, fileExtension) : "";
+  }
 
-  // trigger doesn't contain methods
-  if (fileExtension !== ".trigger") {
+  if (fileExtension === ".cls") {
     debugParams.methodName = includeMethodName ? await getMethodName(selectionLineNum, document) : "";
   }
 

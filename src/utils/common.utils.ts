@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { Config } from "../constants";
 
 const showErrorMessage = (message: string) => {
-  const prefixedMessage = `⚠️ Turbo System Debug: ${message}`;
+  const prefixedMessage = `⚠️ Turbo Apex Debug: ${message}`;
   vscode.window.showErrorMessage(prefixedMessage);
 };
 
@@ -32,10 +32,12 @@ export const getConfiguration = () => {
     includeEntityName,
     includeMethodName,
     includeLineNum,
-  } = vscode.workspace.getConfiguration("turboSystemDebug") as unknown as Config;
+  } = vscode.workspace.getConfiguration("turboApexDebug") as unknown as Config;
 
   const getPrefix = async (type: "REGULAR" | "ERROR" = "REGULAR") => {
-    const prefixes = type === "REGULAR" ? [...logMessagePrefixes, ...errorMessagePrefixes] : errorMessagePrefixes;
+    const prefixes = [
+      ...new Set(type === "REGULAR" ? [...logMessagePrefixes, ...errorMessagePrefixes] : errorMessagePrefixes),
+    ];
 
     if (!prefixes.length) {
       return "";
