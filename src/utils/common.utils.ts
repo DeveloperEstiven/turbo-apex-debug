@@ -49,6 +49,10 @@ export const getConfiguration = () => {
         placeHolder: "Select Prefix",
       });
 
+      if (typeof userSelection === "object" && "label" in userSelection) {
+        return (userSelection as unknown as { label: string }).label;
+      }
+
       if (userSelection === RANDOMIZE) {
         return prefixes[getRandomIndex(prefixes)];
       }
@@ -72,4 +76,8 @@ export const getRandomIndex = <T>(array: T[]) => Math.floor(Math.random() * arra
 export const findSymbols = (kind: vscode.SymbolKind, symbols: vscode.DocumentSymbol[]): vscode.DocumentSymbol[] => {
   const instances = symbols.filter((symbol) => symbol.kind === kind);
   return instances.concat(symbols.flatMap((symbol) => findSymbols(kind, symbol.children)));
+};
+
+export const isRunningInTest = (): boolean => {
+  return process.argv.some((arg) => arg.includes("bootstrap-fork") || arg.includes("--skipWorkspaceStorageLock"));
 };

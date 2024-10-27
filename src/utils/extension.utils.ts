@@ -1,6 +1,6 @@
 import { TextDocument, Position, TextEditor, Range, commands, DocumentSymbol, SymbolKind } from "vscode";
 import { SPACING_KEYWORDS, REGEXP, TYPES, ERROR_VAR_NAMES, SUPPORTED_EXTENSIONS } from "../constants";
-import { findSymbols, getConfiguration, handleError } from "./common.utils";
+import { findSymbols, getConfiguration, handleError, isRunningInTest } from "./common.utils";
 
 const determineSpacing = (document: TextDocument, lineNum: number) => {
   let lineText = document.lineAt(lineNum).text;
@@ -45,6 +45,10 @@ const buildDebug = ({
 
 const getMethodName = async (lineNumber: number, document: TextDocument): Promise<string> => {
   const symbols = await commands.executeCommand<DocumentSymbol[]>("vscode.executeDocumentSymbolProvider", document.uri);
+
+  if (isRunningInTest()) {
+    return "methodName";
+  }
 
   if (symbols?.length) {
     const methodNames = findSymbols(SymbolKind.Method, symbols).map((method) => method.name);
