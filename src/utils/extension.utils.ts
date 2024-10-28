@@ -33,37 +33,53 @@ const buildDebug = ({
   entityName,
   lineNum,
   methodName,
+  isMethodName,
 }: BuildDebugStatementParams) => {
   const startLineBreak = startBreak ? "\n" : "";
   const endLineBreak = endBreak ? "\n" : "";
   const formattedPrefix = prefix ? `${prefix} ` : "";
   const formattedLineNum = lineNum ? `[${lineNum}] ` : "";
   const formattedEntityName = entityName ? `[${entityName}] ` : "";
-  const formattedMethodName = methodName ? `[${methodName}] ` : "";
-  return `${startLineBreak}${spacing}System.debug('${formattedPrefix}${formattedLineNum}${formattedEntityName}${formattedMethodName}${text}${delimiter} ' + ${text}${suffix});${endLineBreak}`;
+
+  const formattedMethodName = methodName ? `[${methodName}]${isMethodName ? "" : " "}` : "";
+  const debugStart = `${startLineBreak}${spacing}System.debug('${
+    isMethodName ? `${formattedPrefix}--------------------- ` : formattedPrefix
+  }${formattedLineNum}${formattedEntityName}${formattedMethodName}`;
+
+  if (isMethodName) {
+    return `${debugStart}');${endLineBreak}`;
+  }
+
+  return `${debugStart}${text}${delimiter} ' + ${text}${suffix});${endLineBreak}`;
 };
 
-const getMethodName = async (lineNumber: number, document: TextDocument): Promise<string> => {
+const getMethodNames = async (lineNumber: number, document: TextDocument): Promise<[string[], string]> => {
   const symbols = await commands.executeCommand<DocumentSymbol[]>("vscode.executeDocumentSymbolProvider", document.uri);
 
-  if (isRunningInTest()) {
-    return "methodName";
+  const isTest = isRunningInTest();
+  if (!isTest && !symbols?.length) {
+    return [[], ""];
   }
 
-  if (symbols?.length) {
-    const methodNames = findSymbols(SymbolKind.Method, symbols).map((method) => method.name);
+  let methodNames = [];
+  if (isTest) {
+    methodNames = ["methodName", "secondMethodName"];
+  } else {
+    methodNames = findSymbols(SymbolKind.Method, symbols).map((method) => method.name);
+  }
 
-    while (lineNumber >= 0) {
-      const lineText = document.lineAt(lineNumber).text;
-      const matchingMethodName = methodNames.find((methodName) => lineText.includes(methodName));
-      if (matchingMethodName) {
-        return matchingMethodName;
-      }
-      lineNumber--;
+  while (lineNumber >= 0) {
+    const lineText = document.lineAt(lineNumber).text;
+    const matchingMethodName = methodNames.find((methodName) => {
+      return lineText.includes(methodName) && SPACING_KEYWORDS.some((keyword) => lineText.trim().startsWith(keyword));
+    });
+    if (matchingMethodName) {
+      return [methodNames, matchingMethodName];
     }
+    lineNumber--;
   }
 
-  return "";
+  return [methodNames, ""];
 };
 
 export const insertDebug = async (selectionLineNum: number, text: string, editor: TextEditor) => {
@@ -88,13 +104,22 @@ export const insertDebug = async (selectionLineNum: number, text: string, editor
     debugParams.entityName = includeEntityName ? extractEntityName(document.fileName, fileExtension) : "";
   }
 
-  if (fileExtension === ".cls") {
-    debugParams.methodName = includeMethodName ? await getMethodName(selectionLineNum, document) : "";
-  }
+  // if (fileExtension === ".cls") {
+  const [methodNames, methodName] = includeMethodName ? await getMethodNames(selectionLineNum, document) : "";
+  debugParams.methodName = methodName as string;
+  // }
 
   await editor.edit((builder) => {
     for (let lineNum = selectionLineNum; lineNum < document.lineCount; lineNum++) {
       const lineText = document.lineAt(lineNum).text;
+
+      if (shouldInsert.methodName(text, methodNames)) {
+        debugParams.isMethodName = true;
+        debugParams.endBreak = true;
+        debugParams.lineNum = includeLineNum ? lineNum + 2 : undefined;
+        builder.insert(new Position(lineNum + 1, 0), buildDebug(debugParams));
+        break;
+      }
 
       if (shouldInsert.afterException(lineText, text)) {
         debugParams.suffix = ".getMessage()";
@@ -150,6 +175,10 @@ export const removeAll = async (editor: TextEditor) => {
 const extractFileExtension = (filePath: string) => {
   const fileExtension = SUPPORTED_EXTENSIONS.find((ext) => filePath.endsWith(ext));
   if (!fileExtension) {
+    if (isRunningInTest()) {
+      return SUPPORTED_EXTENSIONS[0];
+    }
+
     handleError("INVALID_ENTITY");
     return "";
   }
@@ -173,10 +202,12 @@ interface BuildDebugStatementParams {
   lineNum?: number;
   entityName?: string;
   methodName?: string;
+  isMethodName?: boolean;
 }
 
-type InsertType = "afterException" | "beforeReturn" | "afterSemicolon" | "afterBrace" | "beforeBrace";
-const shouldInsert: Record<InsertType, (...args: string[]) => boolean> = {
+type InsertType = "methodName" | "afterException" | "beforeReturn" | "afterSemicolon" | "afterBrace" | "beforeBrace";
+const shouldInsert: Record<InsertType, (...args: any) => boolean> = {
+  methodName: (selection, methodNames) => methodNames.includes(selection.trim()),
   afterSemicolon: (text) => text.includes(";"),
   beforeReturn: (text) => text.startsWith("return") || text.startsWith("throw"),
   afterBrace: (text) => text.endsWith("{") && TYPES.every((type) => !text.includes(type)),

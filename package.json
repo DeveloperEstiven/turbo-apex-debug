@@ -2,7 +2,7 @@
   "name": "turbo-apex-debug",
   "displayName": "Turbo Apex Debug",
   "description": "Simplifies Apex debugging",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "GonzalezDev",
   "icon": "img/icon.png",
   "engines": {

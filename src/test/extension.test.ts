@@ -99,4 +99,43 @@ suite("Turbo Apex Debug Extension Test Suite", function () {
 
     spy.restore();
   });
+
+  test("Should insert System.debug() statement with correct methodName", async () => {
+    const document = await vscode.workspace.openTextDocument({
+      language: "apex",
+      content: `public class TestClass {
+    public void methodName() {
+        Integer x = 10;
+        String message = 'Hello, World!';
+    }
+  
+    public void secondMethodName() {
+        methodName();
+        String message = 'Hello!';
+    }
+}`,
+    });
+
+    testEditor = await vscode.window.showTextDocument(document);
+    await insertDebug(8, "message", testEditor);
+    const expectedDebugStatement = `System.debug('✅ [${9 + 1}] [Untitled-2] [secondMethodName] message: ' + message);`;
+    assert.strictEqual(testEditor.document.lineAt(9).text.trim(), expectedDebugStatement);
+  });
+
+  test("Should insert System.debug() for methodName only", async () => {
+    const document = await vscode.workspace.openTextDocument({
+      language: "apex",
+      content: `public class TestClass {
+    public void methodName() {
+        Integer x = 10;
+        String message = 'Hello, World!';
+    }
+}`,
+    });
+
+    testEditor = await vscode.window.showTextDocument(document);
+    await insertDebug(1, "methodName", testEditor);
+    const expectedDebugStatement = `System.debug('✅ --------------------- [${2 + 1}] [Untitled-3] [methodName]');`;
+    assert.strictEqual(testEditor.document.lineAt(2).text.trim(), expectedDebugStatement);
+  });
 });
