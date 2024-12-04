@@ -2,7 +2,7 @@
   "name": "turbo-apex-debug",
   "displayName": "Turbo Apex Debug",
   "description": "Simplifies Apex debugging",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "GonzalezDev",
   "icon": "img/icon.png",
   "engines": {
@@ -92,8 +92,8 @@
       },
       {
         "command": "turbo-apex-debug.removeAll",
-        "key": "ctrl+alt+e",
-        "mac": "ctrl+alt+e"
+        "key": "ctrl+alt+d",
+        "mac": "ctrl+alt+d"
       }
     ]
   },

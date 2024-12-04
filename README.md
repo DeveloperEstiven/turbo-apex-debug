@@ -26,7 +26,11 @@ Turbo Apex Debug enhances your Salesforce debugging by allowing you to customize
   Shortcut: `ctrl+alt+l`;
 - Turbo Apex Debug: Remove all logs;
   Command: `turbo-apex-debug.removeAll`;
-  Shortcut: `ctrl+alt+e`.
+  Shortcut: `ctrl+alt+d`.
+
+## Changing Default Shortcut
+
+You can always change command's keybinding by going to `ctrl+shift+p` -> `Preferences: Open Keyboard Shortcuts` -> `turbo-apex-debug`
 
 ## Configuration Options
 
@@ -57,7 +61,7 @@ Adjust settings in your `settings.json` file or use the Settings UI to customize
 
 If you use [Turbo Console Log](https://marketplace.visualstudio.com/items?itemName=ChakrounAnas.turbo-console-log) for `.js`/`.ts` files, you can configure a single shortcut to work with both Turbo Console Log and Turbo Apex Debug:
 
-1. Open `keybindings.json`
+1. Open `keybindings.json` (`ctrl+shift+p` -> `Preferences: Open Keyboard Shortcuts (JSON)`)
 2. Add the following:
 
 ```json
@@ -69,6 +73,16 @@ If you use [Turbo Console Log](https://marketplace.visualstudio.com/items?itemNa
   {
     "key": "ctrl+alt+l",
     "command": "turbo-apex-debug.log",
+    "when": "resourceExtname != '.js' && resourceExtname != '.ts'"
+  },
+  {
+    "key": "ctrl+alt+d",
+    "command": "turboConsoleLog.deleteAllLogMessages",
+    "when": "resourceExtname != '.cls' && resourceExtname != '.trigger' && resourceExtname != '.apex'"
+  },
+  {
+    "key": "ctrl+alt+d",
+    "command": "turbo-apex-debug.removeAll",
     "when": "resourceExtname != '.js' && resourceExtname != '.ts'"
   }
 ```
